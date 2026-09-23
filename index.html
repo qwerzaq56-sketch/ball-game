@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>성장형 액션 프로토타입 v0.5</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <div id="load-error"></div>
+
+  <div id="hud">
+    <div class="hud-block">
+      <div class="hp-bar-outer"><div id="hp-fill" class="hp-bar-fill"></div></div>
+      <div id="hp-text" class="hp-text">100 / 100</div>
+    </div>
+    <div class="hud-block stats">
+      <div>Growth: <span id="growth-text">0</span></div>
+      <div>Size: <span id="size-text">20</span></div>
+      <div>Kills: <span id="kills-text">0</span></div>
+    </div>
+    <div class="hud-block abilities">
+      <div class="ability">
+        <span class="ability-label">ATTACK</span>
+        <span id="attack-pips" class="pips locked">LOCKED</span>
+      </div>
+      <div class="ability">
+        <span class="ability-label">DODGE</span>
+        <span id="dodge-pips" class="pips locked">LOCKED</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="unlock-banner"></div>
+  <div id="defeat-banner">DEFEATED — RESPAWNING...</div>
+
+  <div id="debug-panel"></div>
+
+  <div id="controls-hint">
+    WASD 이동 · 마우스 조준 · 좌클릭 공격 · Space 회피 · F1 디버그 패널
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

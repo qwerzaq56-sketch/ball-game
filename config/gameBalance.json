@@ -1,0 +1,139 @@
+{
+  "player": {
+    "startingSize": 20,
+    "startingGrowth": 0,
+    "startingHp": 100,
+    "moveSpeed": 250,
+    "hpPerGrowth": 0.4
+  },
+  "growth": {
+    "growthToSizeRatio": 1.6,
+    "minEatSizeDifference": 0
+  },
+  "attack": {
+    "attackTelegraphTime": 0.2,
+    "attackChargeDuration": 0.25,
+    "attackCooldown": 1.5,
+    "attackRecoveryTime": 0.4
+  },
+  "dodge": {
+    "dodgeDuration": 0.2,
+    "dodgeInvincibleTime": 0.22,
+    "dodgeCooldown": 3.0,
+    "effectLifetime": 0.3
+  },
+  "skills": {
+    "attackStackThresholds": [
+      { "size": 40, "maxStack": 1 },
+      { "size": 100, "maxStack": 2 }
+    ],
+    "dodgeStackThresholds": [
+      { "size": 50, "maxStack": 1 },
+      { "size": 70, "maxStack": 2 }
+    ]
+  },
+  "absorption": {
+    "baseResistanceTime": 0.2,
+    "resistancePerSize": 0.02,
+    "baseMaintainDistance": 30,
+    "maintainDistancePerSize": 0.5,
+    "maxAbsorptionSpeed": 5,
+    "pullForce": 1
+  },
+  "combat": {
+    "knockbackForce": 500,
+    "knockbackDuration": 0.15,
+    "knockbackResistance": 1.0,
+    "hitFlashDuration": 0.08,
+    "hitParticleLifetime": 0.25
+  },
+  "combatScaling": {
+    "referenceSize": 40,
+    "baseAttackDamage": 10,
+    "attackDamagePerSize": 1,
+    "baseAttackRange": 100,
+    "attackRangeGrowthExponent": 1.05,
+    "chargeDistanceMultiplier": 1.0,
+    "baseDodgeDistance": 100,
+    "dodgeDistanceGrowthExponent": 1.1
+  },
+  "healthRegen": {
+    "delay": 5.0,
+    "baseRate": 2.0,
+    "regenPerSize": 0.05
+  },
+  "defense": {
+    "baseDefense": 0,
+    "defensePerSize": 0.5,
+    "minimumDamage": 1
+  },
+  "ai": {
+    "movementSpeed": 130,
+    "detectionRange": 320,
+    "aggression": 0.55,
+    "fleeThreshold": 0.3,
+    "absorptionDetectionRange": 400,
+    "absorptionPriorityRatio": 1.5,
+    "highPriorityAbsorptionRatio": 2.0
+  },
+  "world": {
+    "worldWidth": 5000,
+    "worldHeight": 5000,
+    "minOrbSize": 8,
+    "maxOrbSize": 16,
+    "colorCount": 5
+  },
+  "spawning": {
+    "initialOrbCount": 450,
+    "maxOrbCount": 600,
+    "orbSpawnInterval": 0.25,
+    "initialEnemyCount": 60,
+    "maxEnemyCount": 80,
+    "enemySpawnInterval": 2.0
+  },
+  "enemySpawn": {
+    "smallSizeRatio": 0.6,
+    "mediumSizeRatio": 0.3,
+    "largeSizeRatio": 0.1,
+    "smallSizeMin": 16,
+    "smallSizeMax": 24,
+    "mediumSizeMin": 24,
+    "mediumSizeMax": 36,
+    "largeSizeMin": 36,
+    "largeSizeMax": 55
+  },
+  "enemyScaling": {
+    "baseEnemyMaxSize": 40,
+    "enemyMaxSizePerPlayerSize": 0.8
+  },
+  "deathOrb": {
+    "deathOrbCount": 5,
+    "deathOrbGrowthValue": 5,
+    "deathOrbSize": 9
+  },
+  "killReward": {
+    "baseReward": 10,
+    "referenceSize": 20,
+    "growthExponent": 1.2
+  },
+  "camera": {
+    "baseZoom": 1.0,
+    "minZoom": 0.55,
+    "zoomSizeFactor": 0.004
+  },
+  "audio": {
+    "masterVolume": 1.0,
+    "sfxVolume": 0.8,
+    "attackVolume": 0.8,
+    "damageVolume": 1.0,
+    "dodgeVolume": 0.7,
+    "deathVolume": 0.8
+  },
+  "colors": [
+    { "id": "blue", "color": "#3B82F6" },
+    { "id": "red", "color": "#EF4444" },
+    { "id": "green", "color": "#22C55E" },
+    { "id": "yellow", "color": "#EAB308" },
+    { "id": "purple", "color": "#A855F7" }
+  ]
+}
