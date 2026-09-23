@@ -721,16 +721,8 @@ export class Game {
       ctx.stroke();
     }
 
-    if (e.fromDeath) {
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-      ctx.lineWidth = 1.5 / this.camera.zoom;
-      ctx.moveTo(e.x - r * 0.5, e.y);
-      ctx.lineTo(e.x + r * 0.5, e.y);
-      ctx.moveTo(e.x, e.y - r * 0.5);
-      ctx.lineTo(e.x, e.y + r * 0.5);
-      ctx.stroke();
-    }
+    // v0.6 follow-up: kill-reward orbs no longer get a cross-mark overlay — they're meant to
+    // read as indistinguishable from a naturally-spawned field orb (see spawning.js#spawnDeathOrbs).
 
     // hp bar for AI / player
     if ((e.behavior === 'ai' || e.behavior === 'player') && e.hp < e.maxHp) {

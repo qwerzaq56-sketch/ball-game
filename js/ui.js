@@ -183,7 +183,8 @@ export class UI {
       // the reduced direct-growth multiplier.
       { label: 'Kill Reward', key: 'killReward', fields: [
         ['baseReward', 1], ['referenceSize', 1], ['growthExponent', 0.05], ['growthRewardMultiplier', 0.05],
-        ['orbBaseCount', 1], ['orbPerEnemySize', 0.01], ['orbMaxCount', 1], ['orbSize', 1], ['orbGrowthValue', 1],
+        ['orbBaseCount', 1], ['orbPerEnemySize', 0.01], ['orbMaxCount', 1],
+        ['orbSizeGrowthPerEnemySize', 0.01], ['orbSpreadBase', 1], ['orbSpreadMultiplier', 0.1],
       ] },
       { label: 'Enemy Size Distribution', key: 'enemySpawn', fields: [
         ['smallSizeRatio', 0.05], ['mediumSizeRatio', 0.05], ['largeSizeRatio', 0.05],

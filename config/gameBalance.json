@@ -116,9 +116,10 @@
     "growthRewardMultiplier": 0.5,
     "orbBaseCount": 3,
     "orbPerEnemySize": 0.1,
-    "orbMaxCount": 30,
-    "orbSize": 9,
-    "orbGrowthValue": 5
+    "orbMaxCount": 40,
+    "orbSizeGrowthPerEnemySize": 0.25,
+    "orbSpreadBase": 20,
+    "orbSpreadMultiplier": 2.0
   },
   "lives": {
     "maxLives": 3

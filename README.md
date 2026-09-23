@@ -59,8 +59,9 @@ HUD의 **SOUND** 버튼으로 음소거, **전체 초기화** 버튼으로 현�
 - **아군 흡수 ON/OFF**(우클릭 토글).
 - **AI 흡수 행동 확률화**(60%) + **저체력 AI도 15% 확률로 공격 시도**.
 - **흡수 사운드 진행률 반영**: 흡수 중 피치/음량이 실시간으로 변하는 연속 드론음 추가.
-- **처치 보상 재구성**: 직접 Growth 보상 절반 축소, 대신 적 크기에 비례해 눈에 띄게 많은
-  Orb 드롭.
+- **처치 보상 재구성**: 직접 Growth 보상 절반 축소, 대신 적 크기에 비례해 필드 Orb와 똑같이
+  생긴(크기 다양, 십자 마크 없음) Orb를 더 많이·더 크게·더 넓게 드롭 — 개수 상한에 도달해도
+  개별 Orb 가치가 계속 커져 후반에도 보상이 정체되지 않음.
 - **Life 시스템**: 3회 — 사망해도 Size/Growth 유지한 채 부활, 0이 되면 Game Over.
 - **로컬 Top 10 스코어보드**(`localStorage` 기반, 브라우저별 개별 기록).
 - **전체 초기화 버튼**(스코어보드는 별도 유지).
@@ -106,8 +107,9 @@ v0.6/
   "ai": { "attackCooldown": 2.5, "absorptionAttemptChance": 0.6, "lowHealthAttackChance": 0.15 },
   "killReward": {
     "growthRewardMultiplier": 0.5,
-    "orbBaseCount": 3, "orbPerEnemySize": 0.1, "orbMaxCount": 30,
-    "orbSize": 9, "orbGrowthValue": 5
+    "orbBaseCount": 3, "orbPerEnemySize": 0.1, "orbMaxCount": 40,
+    "orbSizeGrowthPerEnemySize": 0.25,
+    "orbSpreadBase": 20, "orbSpreadMultiplier": 2.0
   },
   "lives": { "maxLives": 3 },
   "camera": { "baseZoom": 1.0, "zoomOutPerSize": 0.003, "maxZoomOut": 2.0 }
