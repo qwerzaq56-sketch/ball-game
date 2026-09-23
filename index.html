@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>성장형 액션 프로토타입 v0.5</title>
+<title>성장형 액션 프로토타입 v0.6</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -20,6 +20,11 @@
       <div>Growth: <span id="growth-text">0</span></div>
       <div>Size: <span id="size-text">20</span></div>
       <div>Kills: <span id="kills-text">0</span></div>
+      <div>Score: <span id="score-text">0</span></div>
+    </div>
+    <div class="hud-block stats">
+      <div>LIFE: <span id="life-text">3</span></div>
+      <div>ALLY ABSORB: <span id="ally-absorb-text" class="ally-on">ON</span></div>
     </div>
     <div class="hud-block abilities">
       <div class="ability">
@@ -31,15 +36,29 @@
         <span id="dodge-pips" class="pips locked">LOCKED</span>
       </div>
     </div>
+    <div class="hud-block hud-controls">
+      <button id="mute-btn" class="hud-btn" type="button">SOUND: ON</button>
+      <button id="reset-btn" class="hud-btn" type="button">전체 초기화</button>
+    </div>
   </div>
 
   <div id="unlock-banner"></div>
   <div id="defeat-banner">DEFEATED — RESPAWNING...</div>
 
+  <div id="gameover-overlay">
+    <div class="gameover-box">
+      <h1>GAME OVER</h1>
+      <div id="gameover-score">SCORE: 0</div>
+      <h2>TOP 10</h2>
+      <ol id="scoreboard-list"></ol>
+      <button id="restart-btn" class="hud-btn" type="button">새 게임 시작</button>
+    </div>
+  </div>
+
   <div id="debug-panel"></div>
 
   <div id="controls-hint">
-    WASD 이동 · 마우스 조준 · 좌클릭 공격 · Space 회피 · F1 디버그 패널
+    WASD 이동 · 마우스 조준 · 좌클릭 공격 · Space 회피 · 우클릭 아군 흡수 ON/OFF · F1 디버그 패널
   </div>
 
   <script type="module" src="js/main.js"></script>

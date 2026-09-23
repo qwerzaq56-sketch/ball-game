@@ -11,8 +11,7 @@
     "minEatSizeDifference": 0
   },
   "attack": {
-    "attackTelegraphTime": 0.2,
-    "attackChargeDuration": 0.25,
+    "attackTelegraphTime": 0.4,
     "attackCooldown": 1.5,
     "attackRecoveryTime": 0.4
   },
@@ -20,7 +19,9 @@
     "dodgeDuration": 0.2,
     "dodgeInvincibleTime": 0.22,
     "dodgeCooldown": 3.0,
-    "effectLifetime": 0.3
+    "effectLifetime": 0.3,
+    "baseDistance": 100,
+    "distanceGrowth": 0.8
   },
   "skills": {
     "attackStackThresholds": [
@@ -41,7 +42,6 @@
     "pullForce": 1
   },
   "combat": {
-    "knockbackForce": 500,
     "knockbackDuration": 0.15,
     "knockbackResistance": 1.0,
     "hitFlashDuration": 0.08,
@@ -51,21 +51,20 @@
     "referenceSize": 40,
     "baseAttackDamage": 10,
     "attackDamagePerSize": 1,
-    "baseAttackRange": 100,
+    "baseAttackRange": 120,
     "attackRangeGrowthExponent": 1.05,
     "chargeDistanceMultiplier": 1.0,
-    "baseDodgeDistance": 100,
-    "dodgeDistanceGrowthExponent": 1.1
+    "attackChargeDurationBase": 0.4,
+    "attackChargeDurationPerSize": 0.002,
+    "baseDefense": 0,
+    "defensePerSize": 0.5,
+    "minimumDamage": 1,
+    "knockbackForce": 500
   },
   "healthRegen": {
     "delay": 5.0,
     "baseRate": 2.0,
     "regenPerSize": 0.05
-  },
-  "defense": {
-    "baseDefense": 0,
-    "defensePerSize": 0.5,
-    "minimumDamage": 1
   },
   "ai": {
     "movementSpeed": 130,
@@ -74,7 +73,10 @@
     "fleeThreshold": 0.3,
     "absorptionDetectionRange": 400,
     "absorptionPriorityRatio": 1.5,
-    "highPriorityAbsorptionRatio": 2.0
+    "highPriorityAbsorptionRatio": 2.0,
+    "attackCooldown": 2.5,
+    "absorptionAttemptChance": 0.6,
+    "lowHealthAttackChance": 0.15
   },
   "world": {
     "worldWidth": 5000,
@@ -106,20 +108,24 @@
     "baseEnemyMaxSize": 40,
     "enemyMaxSizePerPlayerSize": 0.8
   },
-  "deathOrb": {
-    "deathOrbCount": 5,
-    "deathOrbGrowthValue": 5,
-    "deathOrbSize": 9
-  },
   "killReward": {
     "baseReward": 10,
     "referenceSize": 20,
-    "growthExponent": 1.2
+    "growthExponent": 1.2,
+    "growthRewardMultiplier": 0.5,
+    "orbBaseCount": 3,
+    "orbPerEnemySize": 0.1,
+    "orbMaxCount": 30,
+    "orbSize": 9,
+    "orbGrowthValue": 5
+  },
+  "lives": {
+    "maxLives": 3
   },
   "camera": {
     "baseZoom": 1.0,
-    "minZoom": 0.55,
-    "zoomSizeFactor": 0.004
+    "zoomOutPerSize": 0.003,
+    "maxZoomOut": 2.0
   },
   "audio": {
     "masterVolume": 1.0,

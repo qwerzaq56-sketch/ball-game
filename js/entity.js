@@ -52,9 +52,14 @@ export class Entity {
     this.trail = [];
     this.currentAttackRange = 0; // snapshotted from size when an attack starts
     this.currentChargeDistance = 0; // snapshotted from size when an attack starts (v0.5 §6)
+    this.currentChargeDuration = 0; // snapshotted from size when an attack starts (v0.6 §4-2)
     this.attackStack = 0;
     this.attackMaxStack = 0;
     this.attackStackTimer = 0;
+    // v0.6 §3: a hard minimum-spacing gate between AI attacks, independent of stack count — a
+    // large AI with 2 stacks can still only fire the second one after this timer clears, so
+    // "has stacks" no longer means "can burst them out instantly". Unused by the player.
+    this.aiAttackGateTimer = 0;
 
     // shared dodge state machine — same stack model as attack (v0.5 §8)
     this.dodgeState = 'READY'; // READY | DODGING

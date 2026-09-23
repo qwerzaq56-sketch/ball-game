@@ -19,6 +19,9 @@ export class Player extends Entity {
     this.growth = b.startingGrowth;
     this.kills = 0; // v0.3: only counts kills the player's own attack landed the final hit on
     this.onSkillUnlock = null; // set by Game to trigger the HUD banner
+    // v0.6 spec §7: right-click toggles whether the player can absorb same-color (ally) balls.
+    // Starts ON — matches v0.1-0.5 behavior by default, opt-out rather than opt-in.
+    this.allyAbsorptionEnabled = true;
     this._recomputeStacks(balance, false);
   }
 

@@ -65,20 +65,28 @@ export function spawnAI(balance, colorDef, pos = null, playerSize = 20) {
 }
 
 // Orbs generated when a Player/AI dies in combat — same Entity type as spawnOrb(), just
-// smaller and keeping the dead entity's color (spec v0.2 §4: no more separate "Fragment").
+// smaller and keeping the dead entity's color (spec v0.2 §4: no more separate "Fragment", and
+// there never has been one since — everything growth-giving is just "Orb" behavior).
+//
+// v0.6 spec §10-12: the direct Growth reward for a kill was cut way down (see
+// game.js#onEntityDeath's killReward.growthRewardMultiplier), and that Growth moved here
+// instead — a bigger kill drops noticeably *more* orbs, not just a slightly bigger number, so
+// the player has to actually go collect the payoff (and is exposed while doing it) rather than
+// just insta-growing on the kill itself.
 export function spawnDeathOrbs(deadEntity, balance) {
-  const cfg = balance.deathOrb;
+  const kr = balance.killReward;
+  const count = Math.min(kr.orbMaxCount, Math.round(kr.orbBaseCount + deadEntity.size * kr.orbPerEnemySize));
   const orbs = [];
-  for (let i = 0; i < cfg.deathOrbCount; i++) {
+  for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
     const dist = Math.random() * (deadEntity.size + 20);
     const orb = new Entity({
       x: deadEntity.x + Math.cos(angle) * dist,
       y: deadEntity.y + Math.sin(angle) * dist,
-      size: cfg.deathOrbSize,
+      size: kr.orbSize,
       color: deadEntity.color,
       colorHex: deadEntity.colorHex,
-      growthValue: cfg.deathOrbGrowthValue,
+      growthValue: kr.orbGrowthValue,
       moveSpeed: 0,
       behavior: 'orb',
       hp: 1,

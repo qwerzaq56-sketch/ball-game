@@ -90,6 +90,10 @@ export function updateAI(ai, dt, game, balance) {
 // the *biggest size advantage* (not the closest), then follows the priority ladder from §18:
 // survival flee > retaliate if just hit > a clearly-winnable absorption > general hostile
 // engagement > wander.
+// v0.6 spec §8: not every AI attempts an absorption it spots — `willAttemptAbsorption` is
+// re-rolled every decision cycle (~0.2-0.35s), so some AI just ignore a winnable absorption
+// this cycle and fall through to orb-grazing/combat/wander instead. Keeps the population from
+// reading as one predictable hive mind.
 function decideAI(ai, game, balance) {
   const cfg = balance.ai;
   const scanRange = Math.max(cfg.detectionRange, cfg.absorptionDetectionRange);
@@ -124,16 +128,26 @@ function decideAI(ai, game, balance) {
     }
   }
 
-  // 1. survival
+  // 1. survival — v0.6 spec §13: even at critical HP, don't go to 0% attack probability.
+  // Most of the time a low-HP AI still flees, but `lowHealthAttackChance` keeps a small chance
+  // open every decision cycle to instead fall through and take a swing if one's available —
+  // "생존 행동 우선, 단 공격 시도가 완전히 0이 되지는 않음".
   const hpRatio = ai.hp / ai.maxHp;
   if (nearestHostile && hpRatio <= cfg.fleeThreshold && nearestHostile.size > ai.size) {
-    ai.state = 'flee';
-    ai.target = nearestHostile;
-    return;
+    if (Math.random() >= (cfg.lowHealthAttackChance ?? 0)) {
+      ai.state = 'flee';
+      ai.target = nearestHostile;
+      return;
+    }
+    // else: skip fleeing this cycle and fall through to the normal priority chain below,
+    // which may result in a retaliation/attack attempt if conditions allow.
   }
 
+  // v0.6 spec §8: whether this AI even considers an absorption opportunity this cycle at all.
+  const willAttemptAbsorption = !!bestAbsorbable && Math.random() < (cfg.absorptionAttemptChance ?? 1);
+
   // 2a. an overwhelmingly favorable absorption target overrides everything but survival
-  if (bestAbsorbable && bestAbsorbRatio >= cfg.highPriorityAbsorptionRatio) {
+  if (willAttemptAbsorption && bestAbsorbRatio >= cfg.highPriorityAbsorptionRatio) {
     ai.state = 'chase_eat';
     ai.target = bestAbsorbable;
     return;
@@ -147,7 +161,7 @@ function decideAI(ai, game, balance) {
   }
 
   // 3. a clearly winnable absorption still beats casual orb-grazing or picking a fight
-  if (bestAbsorbable && bestAbsorbRatio >= cfg.absorptionPriorityRatio) {
+  if (willAttemptAbsorption && bestAbsorbRatio >= cfg.absorptionPriorityRatio) {
     ai.state = 'chase_eat';
     ai.target = bestAbsorbable;
     return;

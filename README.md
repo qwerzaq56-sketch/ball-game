@@ -1,28 +1,34 @@
-# 탑뷰 2D 성장형 액션 게임 — 웹 프로토타입 (Version 0.5)
+# 탑뷰 2D 성장형 액션 게임 — 웹 프로토타입 (Version 0.6)
 
-Version 0.4의 플레이 QA 및 추가 요구사항을 반영한 버전. **Size → 전투력 → 위험 → 보상**으로
-이어지는 핵심 구조를 완성하는 데 집중했다 — 방어력 추가, 공격/회피가 스택 기반으로 전환,
-흡수가 거리 기반으로 전면 재설계(v0.3/v0.4에서 두 번 발생했던 교착 버그를 구조적으로 제거),
-서로 다른 색상 개체끼리 물리적으로 밀어내기 시작, 적 최대 크기가 플레이어 성장에 연동. 배경은
+Version 0.5의 수정 기획을 반영한 버전. 새 핵심 시스템보다 **다듬기와 지속가능한 플레이
+루프(Life/Score/전체 초기화), 그리고 배포**에 집중했다 — AI 공격 페이스 완화, 공격/회피
+곡선 재조정, 카메라 줌아웃, 아군 흡수 ON/OFF, AI 행동 확률화, 진행률 기반 흡수 사운드,
+처치 보상을 "가서 주워야 하는" 구조로 재편, Life 3회 + 로컬 Top 10 스코어보드, 음소거,
+그리고 **GitHub Pages로 링크 하나면 바로 플레이 가능한 배포**. 배경은
 [GAME_DESIGN.md](GAME_DESIGN.md), 실측 결과는 [BALANCE_NOTES.md](BALANCE_NOTES.md), 버전
 이력은 [../../CHANGELOG.md](../../CHANGELOG.md).
 
-Version 0.1~0.4는 삭제되지 않고 각 폴더에 그대로 있다.
+Version 0.1~0.5는 삭제되지 않고 각 폴더에 그대로 있다.
 
 ## 1. 실행 방법
 
-### 가장 쉬운 방법 (Windows)
+### 온라인 (설치 없음)
+
+다른 사람에게 그냥 링크만 보내면 됩니다. 브라우저에서 열리면 바로 플레이할 수 있습니다.
+
+```
+https://qwerzaq56-sketch.github.io/ball-game/
+```
+
+### 로컬 (Windows)
 
 이 폴더 안의 **`run.bat`을 더블클릭**하세요. 로컬 서버가 자동으로 시작되고, 약 2초 뒤
-**기본 브라우저가 자동으로 열립니다** — `localhost` 주소를 직접 입력할 필요가 없습니다.
-서버는 별도의 "Ball Game Server" 창에서 실행되며, 그 창을 닫으면 서버가 종료됩니다.
-
-macOS/Linux는 터미널에서 `./run.sh`를 실행하세요(마찬가지로 브라우저가 자동으로 열립니다).
+브라우저가 자동으로 열립니다. macOS/Linux는 `./run.sh`.
 
 ### 수동 실행
 
 ```bash
-cd game/versions/v0.5
+cd game/versions/v0.6
 python -m http.server 8000
 ```
 
@@ -36,93 +42,106 @@ python -m http.server 8000
 | 마우스 | 공격 방향 조준 |
 | 좌클릭(누르고 있으면 스택이 남는 한 자동 재시도) | 공격 |
 | `Space` | 회피 |
+| **우클릭** | 아군(같은 색) 흡수 ON/OFF 토글 |
 | `F1` | 디버그/밸런스 패널 열기·닫기 |
 
-공격과 회피는 이제 **스택(충전) 기반**입니다 — HUD에 ●●/●○/○○ 형태로 표시됩니다. 스택이
-남아있으면 쿨다운 없이 연속으로 사용할 수 있고, 스택을 모두 쓰면 일정 시간마다 하나씩
-자동으로 채워집니다.
+HUD의 **SOUND** 버튼으로 음소거, **전체 초기화** 버튼으로 현재 런을 완전히 리셋할 수
+있습니다(Top 10 랭킹은 유지됩니다).
 
-## 3. Version 0.4 대비 달라진 점 (요약)
+## 3. Version 0.5 대비 달라진 점 (요약)
 
-- **방어력 추가**: Size가 클수록 받는 피해가 줄어듭니다(`finalDamage = max(최소피해,
-  공격력 - 방어력)`).
-- **공격/회피 스택제**: LOCKED → 1스택 → 2스택으로, Size 40/100(공격)과 50/70(회피)에서
-  단계적으로 해금됩니다.
-- **공격 범위 ↔ 돌진 거리 버그 수정**: 이제 공격 범위가 커지면 실제 돌진 거리도 함께
-  늘어납니다.
-- **흡수 시스템 전면 재설계**: 더 이상 겹치지 않아도 흡수가 진행됩니다 — 거리가 가까울수록
-  빠르고, 일정 거리(`maintainDistance`, Size 비례) 밖으로 벗어나면 연결이 끊깁니다. 물리적
-  당김을 사실상 제거해 v0.3/v0.4의 교착 상태 버그가 구조적으로 재발할 수 없게 만들었습니다.
-- **HP 리젠 Size 스케일링**: 회복량이 커지는 대신 딜레이도 5초로 늘었습니다.
-- **적 최대 크기가 플레이어 Size에 연동**: 성장할수록 더 크고 위험한 적도 만나게 됩니다
-  (단, 쉬운 소형 개체도 항상 존재합니다).
-- **다른 색상끼리 물리적으로 밀어냄**: 완전히 겹칠 수 없습니다(단, 공격 돌진/회피 중에는
-  그대로 통과).
-- **실행 자동화**: `run.bat`/`run.sh`가 서버 실행 후 브라우저를 자동으로 엽니다.
+- **Debug Panel 구조 정리**: Defense가 Combat Scaling 섹션 안으로 이동.
+- **AI 공격 페이스 완화**: AI 전용 쿨다운(2.5초) + 스택과 무관한 공격 게이트 타이머로,
+  스택이 쌓여 있어도 순식간에 연타하지 못하게 변경.
+- **공격 텔레그래프 0.4초**, **Size 기반 차지 시간**(Size 200 ≈ 0.8초) 추가.
+- **카메라 줌아웃**: Size가 커질수록 더 넓은 시야 확보.
+- **Dodge Distance 선형화**: `100 + Size × 0.8`.
+- **아군 흡수 ON/OFF**(우클릭 토글).
+- **AI 흡수 행동 확률화**(60%) + **저체력 AI도 15% 확률로 공격 시도**.
+- **흡수 사운드 진행률 반영**: 흡수 중 피치/음량이 실시간으로 변하는 연속 드론음 추가.
+- **처치 보상 재구성**: 직접 Growth 보상 절반 축소, 대신 적 크기에 비례해 눈에 띄게 많은
+  Orb 드롭.
+- **Life 시스템**: 3회 — 사망해도 Size/Growth 유지한 채 부활, 0이 되면 Game Over.
+- **로컬 Top 10 스코어보드**(`localStorage` 기반, 브라우저별 개별 기록).
+- **전체 초기화 버튼**(스코어보드는 별도 유지).
+- **음소거 버튼**(설정 유지).
+- **GitHub Pages 배포**: 링크 클릭만으로 실행.
 
 ## 4. 프로젝트 구조
 
 ```
-v0.5/
-├── index.html
-├── run.bat / run.sh       # 서버 자동 실행 + 브라우저 자동 오픈
+v0.6/
+├── index.html               # HUD/Game Over 오버레이 등 정적 마크업 추가
+├── run.bat / run.sh
 ├── css/style.css
 ├── js/
-│   ├── main.js
-│   ├── game.js              # resolvePushApart, 스택 회복 루프, 적 크기 스케일링 연동
-│   ├── player.js             # _recomputeStacks
-│   ├── entity.js             # computeMaxStack, 스택/currentChargeDistance 필드
-│   ├── ai.js                   # 스택 회복 호출 추가
-│   ├── combat.js              # Defense, Size 기반 공격력, 차지거리 버그 수정, 스택 로직
-│   ├── absorption.js         # 거리 기반 전면 재설계 (교착 버그 구조적 제거)
+│   ├── main.js                 # 우클릭 토글, 음소거/리셋/재시작 버튼 wiring
+│   ├── game.js                 # reset(), Life/Score, 카메라 줌아웃, 흡수 드론 훅
+│   ├── player.js                # allyAbsorptionEnabled
+│   ├── entity.js                # currentChargeDuration, aiAttackGateTimer
+│   ├── ai.js                      # 확률적 흡수 시도, 저체력 공격 확률
+│   ├── combat.js                 # Defense 이동, Size 기반 차지시간, AI 게이트, 선형 Dodge
+│   ├── absorption.js             # handlePlayerDefeat로 통합(흡수사망도 Life 소모)
 │   ├── collision.js
-│   ├── spawning.js           # rollEnemySize(balance, playerSize)
-│   ├── ui.js                   # 스택 pip HUD, Skills 임계값 디버그 섹션
-│   └── audio.js
+│   ├── spawning.js               # 적 Size 비례 Orb 드롭
+│   ├── ui.js                       # LIFE/SCORE/ALLY ABSORB HUD, Game Over+스코어보드 렌더링
+│   ├── audio.js                   # 흡수 드론, setMuted()
+│   └── storage.js                 # 신규: localStorage 스코어보드 + 음소거 영속화
 ├── config/gameBalance.json
 ├── GAME_DESIGN.md
 ├── BALANCE_NOTES.md
 └── README.md
 ```
 
-## 5. `gameBalance.json`의 새 항목
+## 5. `gameBalance.json`의 새/변경 항목
 
 ```json
 {
-  "skills": {
-    "attackStackThresholds": [{"size":40,"maxStack":1},{"size":100,"maxStack":2}],
-    "dodgeStackThresholds": [{"size":50,"maxStack":1},{"size":70,"maxStack":2}]
-  },
-  "defense": { "baseDefense": 0, "defensePerSize": 0.5, "minimumDamage": 1 },
-  "absorption": {
-    "baseResistanceTime": 0.2, "resistancePerSize": 0.02,
-    "baseMaintainDistance": 30, "maintainDistancePerSize": 0.5,
-    "maxAbsorptionSpeed": 1.0, "pullForce": 0.15
-  },
   "combatScaling": {
-    "baseAttackDamage": 10, "attackDamagePerSize": 1,
-    "baseAttackRange": 120, "chargeDistanceMultiplier": 1.0, ...
+    "attackChargeDurationBase": 0.4, "attackChargeDurationPerSize": 0.002,
+    "baseDefense": 0, "defensePerSize": 0.5, "minimumDamage": 1,
+    "knockbackForce": 500
   },
-  "healthRegen": { "delay": 5.0, "baseRate": 2.0, "regenPerSize": 0.05 },
-  "enemyScaling": { "baseEnemyMaxSize": 40, "enemyMaxSizePerPlayerSize": 0.8 }
+  "dodge": { "baseDistance": 100, "distanceGrowth": 0.8 },
+  "ai": { "attackCooldown": 2.5, "absorptionAttemptChance": 0.6, "lowHealthAttackChance": 0.15 },
+  "killReward": {
+    "growthRewardMultiplier": 0.5,
+    "orbBaseCount": 3, "orbPerEnemySize": 0.1, "orbMaxCount": 30,
+    "orbSize": 9, "orbGrowthValue": 5
+  },
+  "lives": { "maxLives": 3 },
+  "camera": { "baseZoom": 1.0, "zoomOutPerSize": 0.003, "maxZoomOut": 2.0 }
 }
 ```
 
-`skills.*StackThresholds`는 `[{size, maxStack}, ...]` 배열입니다 — 새 단계를 추가하려면
-항목을 더 넣기만 하면 됩니다(코드 수정 불필요).
+`defense`(독립 섹션)와 `deathOrb` 섹션은 v0.6에서 제거되었다 — 전자는 `combatScaling`으로,
+후자는 `killReward`의 `orb*` 필드로 흡수됐다.
 
 ## 6. Debug Mode
 
-`F1` 패널에 **Skills**(스택 해금 Size, 배열이라 전용 UI로 편집), **Defense**,
-**Absorption**(거리 기반 신규 필드), **Combat Scaling**, **Health Regen**,
-**Enemy Scaling** 섹션이 갱신/추가되었습니다.
+`F1` 패널의 **Combat Scaling** 섹션에 Defense/차지시간/넉백이 모두 합쳐져 있고, **AI**
+섹션에 `attackCooldown`/`absorptionAttemptChance`/`lowHealthAttackChance`가,
+**Dodge** 섹션에 `baseDistance`/`distanceGrowth`가, **Kill Reward** 섹션에 orb 관련
+필드들이, 그리고 새로운 **Lives**/**Camera** 섹션이 추가됐다.
 
-## 7. 새로운 색상 / AI 추가 방법
+## 7. 로컬 Top 10 스코어보드에 대하여
 
-Version 0.2~0.4와 동일합니다. 다른 색과의 물리적 밀어내기는 색상 정의와 무관하게 자동으로
-적용됩니다(`js/game.js#resolvePushApart`).
+이 프로젝트는 서버가 없는 순수 정적 웹 게임입니다. Top 10 기록은 `localStorage`에
+저장되며, **오직 그 브라우저·그 기기에서만** 유지됩니다. GitHub Pages에 배포해도 방문자마다
+서로 다른 Top 10을 보게 됩니다 — 전역(글로벌) 랭킹이 아닙니다. 브라우저의 사이트 데이터를
+지우거나 시크릿 모드로 접속하면 기록도 함께 사라집니다.
 
-## 8. 향후 확장 방법
+## 8. GitHub Pages로 배포하기
 
-[GAME_DESIGN.md](GAME_DESIGN.md) §11과 [BALANCE_NOTES.md](BALANCE_NOTES.md)의 "추가로
+이 폴더(`game/public/`에 복사된 최신 버전)는 순수 정적 파일만으로 구성되어 있어 별도 빌드
+과정 없이 그대로 GitHub Pages에 올릴 수 있습니다. 모든 리소스 경로가 상대 경로이므로
+`https://<user>.github.io/<repo>/` 형태의 서브 경로에서도 정상 동작합니다.
+
+## 9. 새로운 색상 / AI 추가 방법
+
+Version 0.2~0.5와 동일합니다.
+
+## 10. 향후 확장 방법
+
+[GAME_DESIGN.md](GAME_DESIGN.md) §17과 [BALANCE_NOTES.md](BALANCE_NOTES.md)의 "추가로
 조정이 필요할 수 있는 수치"를 참고하세요.

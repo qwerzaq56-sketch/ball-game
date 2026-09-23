@@ -44,12 +44,16 @@ function completeAbsorption(absorber, target, game, balance) {
   game.spawnAbsorptionParticles(target.x, target.y, target.colorHex);
   absorber.scalePulseTimer = 0.3; // short "grew bigger" scale pulse on the absorber
   if (absorber === game.player || target === game.player) game.audio.absorbSuccess();
-  if (absorber === game.player) game.spawnFloatingText(absorber.x, absorber.y - absorber.size / 2 - 10, `+${Math.round(gained)} GROWTH`, '#93c5fd');
+  if (absorber === game.player) {
+    game.spawnFloatingText(absorber.x, absorber.y - absorber.size / 2 - 10, `+${Math.round(gained)} GROWTH`, '#93c5fd');
+    game.score += Math.round(gained);
+  }
   cancelAbsorption(target);
 
   if (target.behavior === 'player') {
-    game.ui.showDefeatMessage('ABSORBED');
-    game.respawnPlayer();
+    // v0.6 spec §16: being fully absorbed costs a Life exactly like a combat death — route
+    // through the same shared handler so Game Over triggers consistently either way.
+    game.handlePlayerDefeat('ABSORBED');
   } else {
     // Kill Count only tracks the player's own attack finishing an enemy off, not absorption —
     // so no kills++ here even when the player is the absorber.

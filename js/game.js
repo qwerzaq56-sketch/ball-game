@@ -7,7 +7,6 @@ import {
   canStartAttack, startAttack, canStartDodge, startDodge,
 } from './combat.js';
 import { spawnOrb, spawnAI, spawnDeathOrbs } from './spawning.js';
-import { computeMaxStack } from './entity.js';
 import { startAbsorption, updateAbsorptions, maintainDistanceFor } from './absorption.js';
 import { AudioManager } from './audio.js';
 
@@ -22,8 +21,19 @@ export class Game {
     this.ui = ui;
 
     this.audio = new AudioManager(balance);
+    this.onGameOver = null; // set by main.js — persists across reset()
+    this._absorbDroneActive = false;
 
-    this.player = new Player(balance);
+    this.reset();
+  }
+
+  // v0.6 spec §14: "전체 초기화" rebuilds every piece of runtime state exactly as a fresh page
+  // load would, WITHOUT touching audio/canvas/input wiring (session-level, not run-level) or the
+  // Top 10 scoreboard (which lives entirely in storage.js/localStorage and is a deliberately
+  // separate action — see spec §14/§17). Also doubles as the constructor's own init path so
+  // there's only one place that defines "what a fresh run looks like".
+  reset() {
+    this.player = new Player(this.balance);
     this.player.onSkillUnlock = (type) => {
       this.ui.showUnlock(type);
       this.audio.unlock();
@@ -35,11 +45,18 @@ export class Game {
     this.orbSpawnTimer = 0;
     this.enemySpawnTimer = 0;
     this.paused = false;
+    this.gameOver = false;
+    this.lives = this.balance.lives.maxLives;
+    this.score = 0;
+    if (this._absorbDroneActive) {
+      this.audio.stopAbsorbDrone();
+      this._absorbDroneActive = false;
+    }
 
     this.camera = {
       x: this.player.x,
       y: this.player.y,
-      zoom: balance.camera.baseZoom,
+      zoom: this.balance.camera.baseZoom,
     };
 
     this.initWorld();
@@ -136,7 +153,10 @@ export class Game {
       const regenerating = updateHealthRegen(e, dt, b);
       if (regenerating && Math.random() < 0.15) this.spawnRegenParticle(e.x, e.y, e.size);
       if (e.scalePulseTimer > 0) e.scalePulseTimer = Math.max(0, e.scalePulseTimer - dt);
-      updateAttackStack(e, dt, b);
+      // v0.6 spec §3: AI regenerates attack stacks on its own (slower) cooldown, separate from
+      // the player's — see combat.js#updateAttackStack and gameBalance.json's `ai.attackCooldown`.
+      const attackCooldown = e.behavior === 'ai' ? b.ai.attackCooldown : b.attack.attackCooldown;
+      updateAttackStack(e, dt, attackCooldown);
       updateDodgeStack(e, dt, b);
     }
 
@@ -147,9 +167,36 @@ export class Game {
     this.updateCamera(dt);
     this.updateParticles(dt);
     this.updateFloatingTexts(dt);
+    this.updatePlayerAbsorbDrone();
     this.orbSpawnLoop(dt);
     this.enemySpawnLoop(dt);
     this.cleanupDead();
+  }
+
+  // v0.6 spec §9: a continuous, progress-driven absorption drone plays whenever the player is
+  // involved in an active absorption (either side), instead of only a start/success one-shot.
+  // Checks at most once per frame; the drone itself is a persistent oscillator/gain/filter graph
+  // whose parameters are eased in place (see audio.js), never recreated.
+  updatePlayerAbsorbDrone() {
+    const p = this.player;
+    let progress = null;
+    if (p.alive && p.beingAbsorbedByRef) {
+      progress = p.absorptionRequired > 0 ? p.absorptionProgress / p.absorptionRequired : 0;
+    } else if (p.alive) {
+      const target = this.entities.find((e) => e.alive && e.beingAbsorbedByRef === p);
+      if (target) progress = target.absorptionRequired > 0 ? target.absorptionProgress / target.absorptionRequired : 0;
+    }
+
+    if (progress !== null) {
+      if (!this._absorbDroneActive) {
+        this.audio.startAbsorbDrone();
+        this._absorbDroneActive = true;
+      }
+      this.audio.updateAbsorbDrone(progress);
+    } else if (this._absorbDroneActive) {
+      this.audio.stopAbsorbDrone();
+      this._absorbDroneActive = false;
+    }
   }
 
   updatePlayer(dt) {
@@ -218,9 +265,14 @@ export class Game {
           target.alive = false;
           eater.addGrowth(target.growthValue, b);
           this.spawnGrowthParticles(target.x, target.y, target.colorHex);
-          if (eater === this.player) this.audio.growth();
+          if (eater === this.player) {
+            this.audio.growth();
+            this.score += Math.round(target.growthValue);
+          }
           continue;
         }
+
+        if (eater === this.player && !this.player.allyAbsorptionEnabled) continue; // v0.6 §7
 
         if (canAbsorb(eater, target) && dist(eater, target) <= maintainDistance) {
           startAbsorption(eater, target, b, this);
@@ -271,13 +323,17 @@ export class Game {
     }
   }
 
+  // v0.6 spec §5: the camera zooms out as Size grows so a bigger ball doesn't block the
+  // player's own view of incoming threats — a direct payoff for growing, not just a side effect
+  // of it. `zoomOutFactor` divides baseZoom down, capped at `maxZoomOut` so it can't zoom out
+  // indefinitely at very high Size.
   updateCamera(dt) {
     const cfg = this.balance.camera;
     const w = this.balance.world;
     const p = this.player;
 
-    const sizeGrowth = Math.max(0, p.size - p.baseSize);
-    const targetZoom = Math.max(cfg.minZoom, cfg.baseZoom - sizeGrowth * cfg.zoomSizeFactor);
+    const zoomOutFactor = Math.min(cfg.maxZoomOut, 1 + p.size * cfg.zoomOutPerSize);
+    const targetZoom = cfg.baseZoom / zoomOutFactor;
 
     const lerp = 1 - Math.pow(0.001, dt);
     this.camera.zoom += (targetZoom - this.camera.zoom) * lerp;
@@ -328,25 +384,28 @@ export class Game {
 
   // v0.3: takes the attacker so we can credit a Kill Count (spec §6) and play the right
   // death-adjacent sound only for events that matter to the player (spec §4).
+  // v0.6 spec §16: player death now costs a Life instead of ending the run outright — Size/
+  // Growth carry over unchanged into the respawn, and only running out of Lives triggers Game
+  // Over (spec: "부활할 때 Size는 감소하지 않는다").
   onEntityDeath(entity, attacker) {
     if (entity.behavior === 'player') {
       this.spawnDeathParticles(entity.x, entity.y, entity.colorHex);
-      this.ui.showDefeatMessage('DEFEATED');
       this.audio.death();
-      this.respawnPlayer();
+      this.handlePlayerDefeat('DEFEATED');
       return;
     }
     this.spawnDeathParticles(entity.x, entity.y, entity.colorHex);
 
-    // v0.4 spec §31-36: a direct, size-scaled growth reward for whoever actually landed the
-    // killing attack (player OR ai — Size stays the unified stat for both), on top of the
-    // death orbs anyone nearby can still pick up.
+    // v0.4 spec §31-36 / v0.6 spec §10-12: a direct, size-scaled growth reward for whoever
+    // landed the killing attack, but cut down by `growthRewardMultiplier` — the bulk of a kill's
+    // payoff now comes from the orb spray below instead, which has to be collected in person.
     if (attacker && (attacker.behavior === 'player' || attacker.behavior === 'ai') && attacker.alive) {
       const kr = this.balance.killReward;
-      const reward = kr.baseReward * Math.pow(entity.size / kr.referenceSize, kr.growthExponent);
+      const reward = kr.baseReward * Math.pow(entity.size / kr.referenceSize, kr.growthExponent) * kr.growthRewardMultiplier;
       attacker.addGrowth(reward, this.balance);
       if (attacker === this.player) {
         this.player.kills += 1;
+        this.score += Math.round(reward) + 100; // flat per-kill score bonus, on top of the growth
         this.audio.death();
         this.audio.killReward();
         this.spawnFloatingText(attacker.x, attacker.y - attacker.size / 2 - 10, `+${Math.round(reward)} GROWTH`, '#4ade80');
@@ -362,22 +421,16 @@ export class Game {
 
   respawnPlayer() {
     const p = this.player;
-    const b = this.balance.player;
     p.x = this.balance.world.worldWidth / 2;
     p.y = this.balance.world.worldHeight / 2;
-    p.growth = Math.floor(p.growth * 0.5);
-    p.baseSize = b.startingSize;
-    p.refreshFromGrowth(this.balance);
-    p.attackMaxStack = computeMaxStack(p.size, this.balance.skills.attackStackThresholds);
-    p.attackStack = p.attackMaxStack;
-    p.attackUnlocked = p.attackMaxStack > 0;
-    p.dodgeMaxStack = computeMaxStack(p.size, this.balance.skills.dodgeStackThresholds);
-    p.dodgeStack = p.dodgeMaxStack;
-    p.dodgeUnlocked = p.dodgeMaxStack > 0;
+    // Size/Growth/stacks are deliberately left untouched (spec §16: a Life-based respawn keeps
+    // Size — only a death with zero Lives left resets anything, and that goes through reset()).
     p.hp = p.maxHp;
     p.alive = true;
     p.attackState = 'READY';
     p.dodgeState = 'READY';
+    p.attackStack = p.attackMaxStack;
+    p.dodgeStack = p.dodgeMaxStack;
     p.invincible = false;
     p.beingAbsorbedByRef = null;
     p.kx = 0;
@@ -385,6 +438,27 @@ export class Game {
     p.knockbackTimer = 0;
     p.regenTimer = 999;
     p.scalePulseTimer = 0;
+  }
+
+  // v0.6 spec §16: shared by both ways the player can go down — combat death
+  // (onEntityDeath) and being fully absorbed (absorption.js#completeAbsorption) — so a Life is
+  // spent and Game Over triggers consistently regardless of which one happened.
+  handlePlayerDefeat(reason) {
+    this.lives -= 1;
+    if (this.lives > 0) {
+      this.ui.showDefeatMessage(reason);
+      this.respawnPlayer();
+    } else {
+      this.triggerGameOver();
+    }
+  }
+
+  // v0.6 spec §16: all Lives spent — freeze the sim, submit the run's score to the local Top 10,
+  // and hand off to whatever main.js wired up (the Game Over overlay) via onGameOver.
+  triggerGameOver() {
+    this.gameOver = true;
+    this.paused = true;
+    if (this.onGameOver) this.onGameOver(this.score);
   }
 
   // ---------- particles ----------

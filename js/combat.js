@@ -13,6 +13,13 @@
 // mandatory wait between every use. Defense reduces incoming damage (spec §3). Charge distance
 // is derived from the attack's own range instead of a fixed speed constant, fixing the v0.4 bug
 // where a bigger attack range didn't actually make the dash travel any further (spec §6).
+// v0.6: Defense moved under combatScaling (spec §2-1) — it's Size-driven combat scaling, not
+// its own subsystem. Attack *charge duration* now also scales with Size (spec §4-2, separate
+// from charge *distance* — see startAttack), and AI gets its own, slower attack cadence: a
+// dedicated `ai.attackCooldown` for stack regen plus a hard per-attack gate
+// (`aiAttackGateTimer`) so a multi-stack AI can't burst every charge out instantly (spec §3).
+// Dodge distance switches from the exponential Size curve to the flat linear one the spec
+// gives directly (spec §6): `baseDistance + size * distanceGrowth`.
 
 import { cancelAbsorption } from './absorption.js';
 
@@ -22,13 +29,13 @@ export function attackDamageForSize(size, balance) {
 }
 
 export function defenseForSize(size, balance) {
-  const d = balance.defense;
-  return Math.max(0, d.baseDefense + size * d.defensePerSize);
+  const c = balance.combatScaling;
+  return Math.max(0, c.baseDefense + size * c.defensePerSize);
 }
 
 export function applyDefense(rawDamage, targetSize, balance) {
-  const d = balance.defense;
-  return Math.max(d.minimumDamage, rawDamage - defenseForSize(targetSize, balance));
+  const c = balance.combatScaling;
+  return Math.max(c.minimumDamage, rawDamage - defenseForSize(targetSize, balance));
 }
 
 export function attackRangeForSize(size, balance) {
@@ -36,13 +43,24 @@ export function attackRangeForSize(size, balance) {
   return Math.max(20, c.baseAttackRange * Math.pow(size / c.referenceSize, c.attackRangeGrowthExponent));
 }
 
-export function dodgeDistanceForSize(size, balance) {
+// v0.6 spec §4-2: bigger balls hit harder and further, but need longer to wind up — a
+// deliberate risk/reward tradeoff, not just a range bonus. Independent of attackRangeForSize;
+// see startAttack for how the two combine into an actual dash speed.
+export function attackChargeDurationForSize(size, balance) {
   const c = balance.combatScaling;
-  return Math.max(20, c.baseDodgeDistance * Math.pow(size / c.referenceSize, c.dodgeDistanceGrowthExponent));
+  return Math.max(0.05, c.attackChargeDurationBase + size * c.attackChargeDurationPerSize);
+}
+
+// v0.6 spec §6: linear instead of v0.5's exponential curve — Base(100) + Size × Growth(0.8).
+export function dodgeDistanceForSize(size, balance) {
+  const d = balance.dodge;
+  return Math.max(20, d.baseDistance + size * d.distanceGrowth);
 }
 
 export function canStartAttack(entity) {
-  return entity.attackStack > 0 && entity.attackState === 'READY' && entity.dodgeState !== 'DODGING';
+  if (entity.attackStack <= 0 || entity.attackState !== 'READY' || entity.dodgeState === 'DODGING') return false;
+  if (entity.behavior === 'ai' && entity.aiAttackGateTimer > 0) return false;
+  return true;
 }
 
 export function startAttack(entity, dirAngle, balance) {
@@ -55,6 +73,8 @@ export function startAttack(entity, dirAngle, balance) {
   const c = balance.combatScaling;
   entity.currentAttackRange = attackRangeForSize(entity.size, balance);
   entity.currentChargeDistance = entity.currentAttackRange * c.chargeDistanceMultiplier;
+  entity.currentChargeDuration = attackChargeDurationForSize(entity.size, balance);
+  if (entity.behavior === 'ai') entity.aiAttackGateTimer = balance.ai.attackCooldown;
 }
 
 export function updateAttack(entity, dt, balance, hostiles, game) {
@@ -76,7 +96,9 @@ export function updateAttack(entity, dt, balance, hostiles, game) {
       entity.attackTimer += dt;
       // v0.5 fix: speed is derived from the range-scaled charge distance so a bigger attack
       // range always means the dash actually travels further, not just a wider hit padding.
-      const speed = entity.currentChargeDistance / cfg.attackChargeDuration;
+      // v0.6: the duration it's spread over now also scales with Size independently (see
+      // attackChargeDurationForSize) — a bigger ball's dash covers more ground but takes longer.
+      const speed = entity.currentChargeDistance / entity.currentChargeDuration;
       entity.x += Math.cos(entity.attackDir) * speed * dt;
       entity.y += Math.sin(entity.attackDir) * speed * dt;
       entity.trail.push({ x: entity.x, y: entity.y });
@@ -93,7 +115,7 @@ export function updateAttack(entity, dt, balance, hostiles, game) {
         }
       }
 
-      if (entity.attackTimer >= cfg.attackChargeDuration) {
+      if (entity.attackTimer >= entity.currentChargeDuration) {
         entity.attackState = 'RECOVERY';
         entity.attackTimer = 0;
       }
@@ -111,17 +133,21 @@ export function updateAttack(entity, dt, balance, hostiles, game) {
   }
 }
 
-// v0.5: attackStack/dodgeStack refill one charge at a time, every `attackCooldown` /
-// `dodgeCooldown` seconds, capped at the entity's current max (itself Size-driven — see
-// entity.js#computeMaxStack and player.js/ai.js's skill-stage recompute).
-export function updateAttackStack(entity, dt, balance) {
+// v0.5: attackStack/dodgeStack refill one charge at a time, every `cooldownSeconds`, capped at
+// the entity's current max (itself Size-driven — see entity.js#computeMaxStack and
+// player.js/ai.js's skill-stage recompute).
+// v0.6: `cooldownSeconds` is now passed in explicitly rather than always read from
+// `balance.attack.attackCooldown` — AI uses its own, slower `balance.ai.attackCooldown` (spec
+// §3), the player keeps `balance.attack.attackCooldown`. See game.js's shared per-entity loop.
+export function updateAttackStack(entity, dt, cooldownSeconds) {
+  if (entity.aiAttackGateTimer > 0) entity.aiAttackGateTimer = Math.max(0, entity.aiAttackGateTimer - dt);
   if (entity.attackStack >= entity.attackMaxStack) {
     entity.attackStackTimer = 0;
     return;
   }
   entity.attackStackTimer += dt;
-  if (entity.attackStackTimer >= balance.attack.attackCooldown) {
-    entity.attackStackTimer -= balance.attack.attackCooldown;
+  if (entity.attackStackTimer >= cooldownSeconds) {
+    entity.attackStackTimer -= cooldownSeconds;
     entity.attackStack = Math.min(entity.attackMaxStack, entity.attackStack + 1);
   }
 }
@@ -169,9 +195,9 @@ export function applyDamage(target, rawDamage, game, attacker, balance) {
 function applyKnockback(target, attacker, game) {
   if (!game) return;
   const cfg = game.balance.combat;
-  const ref = game.balance.combatScaling.referenceSize;
+  const cs = game.balance.combatScaling;
   const dir = Math.atan2(target.y - attacker.y, target.x - attacker.x);
-  const speed = (cfg.knockbackForce * cfg.knockbackResistance) / Math.max(0.2, target.size / ref);
+  const speed = (cs.knockbackForce * cfg.knockbackResistance) / Math.max(0.2, target.size / cs.referenceSize);
   target.kx = Math.cos(dir) * speed;
   target.ky = Math.sin(dir) * speed;
   target.knockbackTimer = cfg.knockbackDuration;
