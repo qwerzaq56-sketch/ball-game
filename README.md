@@ -42,11 +42,12 @@ python -m http.server 8000
 | 마우스 | 공격 방향 조준 |
 | 좌클릭(누르고 있으면 스택이 남는 한 자동 재시도) | 공격 |
 | `Space` | 회피 |
-| **우클릭** | 아군(같은 색) 흡수 ON/OFF 토글 |
 | `F1` | 디버그/밸런스 패널 열기·닫기 |
 
 HUD의 **SOUND** 버튼으로 음소거, **전체 초기화** 버튼으로 현재 런을 완전히 리셋할 수
-있습니다(Top 10 랭킹은 유지됩니다).
+있습니다(Top 10 랭킹은 유지됩니다). 아군(같은 색) 흡수 ON/OFF는 `F1` 디버그 패널의
+**Gameplay** 섹션 체크박스로 조절합니다(전투 중 실수로 꺼지지 않도록 일부러 우클릭이 아닌
+여기에 뒀습니다) — 기본값은 ON.
 
 ## 3. Version 0.5 대비 달라진 점 (요약)
 
@@ -56,7 +57,8 @@ HUD의 **SOUND** 버튼으로 음소거, **전체 초기화** 버튼으로 현�
 - **공격 텔레그래프 0.4초**, **Size 기반 차지 시간**(Size 200 ≈ 0.8초) 추가.
 - **카메라 줌아웃**: Size가 커질수록 더 넓은 시야 확보.
 - **Dodge Distance 선형화**: `100 + Size × 0.8`.
-- **아군 흡수 ON/OFF**(우클릭 토글).
+- **아군 흡수 ON/OFF**(F1 디버그 패널의 Gameplay 섹션 체크박스, 기본 ON — 실수로 꺼지지
+  않도록 우클릭이 아닌 여기로 이동).
 - **AI 흡수 행동 확률화**(60%) + **저체력 AI도 15% 확률로 공격 시도**.
 - **흡수 사운드 진행률 반영**: 흡수 중 피치/음량이 실시간으로 변하는 연속 드론음 추가.
 - **처치 보상 재구성**: 직접 Growth 보상 절반 축소, 대신 적 크기에 비례해 필드 Orb와 똑같이
@@ -76,7 +78,7 @@ v0.6/
 ├── run.bat / run.sh
 ├── css/style.css
 ├── js/
-│   ├── main.js                 # 우클릭 토글, 음소거/리셋/재시작 버튼 wiring
+│   ├── main.js                 # 음소거/리셋/재시작 버튼 wiring
 │   ├── game.js                 # reset(), Life/Score, 카메라 줌아웃, 흡수 드론 훅
 │   ├── player.js                # allyAbsorptionEnabled
 │   ├── entity.js                # currentChargeDuration, aiAttackGateTimer
@@ -85,7 +87,7 @@ v0.6/
 │   ├── absorption.js             # handlePlayerDefeat로 통합(흡수사망도 Life 소모)
 │   ├── collision.js
 │   ├── spawning.js               # 적 Size 비례 Orb 드롭
-│   ├── ui.js                       # LIFE/SCORE/ALLY ABSORB HUD, Game Over+스코어보드 렌더링
+│   ├── ui.js                       # LIFE/SCORE/ALLY ABSORB HUD, Gameplay 체크박스, Game Over+스코어보드 렌더링
 │   ├── audio.js                   # 흡수 드론, setMuted()
 │   └── storage.js                 # 신규: localStorage 스코어보드 + 음소거 영속화
 ├── config/gameBalance.json
@@ -121,10 +123,11 @@ v0.6/
 
 ## 6. Debug Mode
 
-`F1` 패널의 **Combat Scaling** 섹션에 Defense/차지시간/넉백이 모두 합쳐져 있고, **AI**
-섹션에 `attackCooldown`/`absorptionAttemptChance`/`lowHealthAttackChance`가,
-**Dodge** 섹션에 `baseDistance`/`distanceGrowth`가, **Kill Reward** 섹션에 orb 관련
-필드들이, 그리고 새로운 **Lives**/**Camera** 섹션이 추가됐다.
+`F1` 패널 맨 위의 **Gameplay** 섹션에 아군 흡수 ON/OFF 체크박스가 있다(기본 ON). 그 아래
+**Combat Scaling** 섹션에 Defense/차지시간/넉백이 모두 합쳐져 있고, **AI** 섹션에
+`attackCooldown`/`absorptionAttemptChance`/`lowHealthAttackChance`가, **Dodge** 섹션에
+`baseDistance`/`distanceGrowth`가, **Kill Reward** 섹션에 orb 관련 필드들이, 그리고 새로운
+**Lives**/**Camera** 섹션이 추가됐다.
 
 ## 7. 로컬 Top 10 스코어보드에 대하여
 

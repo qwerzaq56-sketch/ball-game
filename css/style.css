@@ -352,7 +352,7 @@ html, body {
   flex: 1;
 }
 
-.debug-row input {
+.debug-row input[type="number"] {
   width: 90px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -360,4 +360,12 @@ html, body {
   border-radius: 4px;
   padding: 3px 6px;
   font-size: 12px;
+}
+
+/* v0.6 follow-up: the Gameplay section's Ally Absorption toggle */
+.debug-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #4ade80;
+  cursor: pointer;
 }

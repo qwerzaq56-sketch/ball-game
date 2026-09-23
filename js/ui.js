@@ -6,6 +6,7 @@ export class UI {
   constructor(balance, onBalanceChange) {
     this.balance = balance;
     this.onBalanceChange = onBalanceChange || (() => {});
+    this.game = null; // set on the first update(dt, game) call — the checkbox handler below needs it
 
     this.hpFill = document.getElementById('hp-fill');
     this.hpText = document.getElementById('hp-text');
@@ -99,6 +100,7 @@ export class UI {
   // v0.6: takes the whole Game instance now (was just `player`) so it can also read
   // lives/score/ally-absorption state, all of which live on Game, not Player/HUD-local state.
   update(dt, game) {
+    this.game = game; // debug-panel checkbox handlers read this
     const player = game.player;
     const hpRatio = Math.max(0, player.hp / player.maxHp);
     this.hpFill.style.width = `${hpRatio * 100}%`;
@@ -111,6 +113,9 @@ export class UI {
 
     this.allyAbsorbText.textContent = player.allyAbsorptionEnabled ? 'ON' : 'OFF';
     this.allyAbsorbText.className = player.allyAbsorptionEnabled ? 'ally-on' : 'ally-off';
+    // keep the debug-panel checkbox in sync (e.g. after a Full Reset, which always resets the
+    // flag back to its default of ON — see player.js)
+    if (this.allyAbsorbCheckbox) this.allyAbsorbCheckbox.checked = player.allyAbsorptionEnabled;
 
     this.renderPips(this.attackPips, player.attackStack, player.attackMaxStack);
     this.renderPips(this.dodgePips, player.dodgeStack, player.dodgeMaxStack);
@@ -210,6 +215,11 @@ export class UI {
     const root = document.createElement('div');
     root.innerHTML = '<h2>DEBUG <span class="hint">(F1 to close)</span></h2>';
 
+    // v0.6 follow-up: the ally-absorption toggle used to be a right-click gesture on the
+    // canvas, easy to trigger by accident mid-fight. It now lives only here — a deliberate
+    // action behind the debug panel — and defaults to ON every fresh run (see player.js).
+    root.appendChild(this.buildGameplaySection());
+
     // v0.5 §22: Skill stack thresholds are a small array, not a flat scalar, so they get their
     // own hand-built section instead of the generic flat-key loop below.
     root.appendChild(this.buildSkillThresholdSection());
@@ -245,6 +255,30 @@ export class UI {
     }
 
     this.debugPanel.appendChild(root);
+  }
+
+  buildGameplaySection() {
+    const box = document.createElement('div');
+    box.className = 'debug-section';
+    const h = document.createElement('h3');
+    h.textContent = 'Gameplay';
+    box.appendChild(h);
+
+    const row = document.createElement('label');
+    row.className = 'debug-row';
+    const span = document.createElement('span');
+    span.textContent = 'Ally Absorption (아군 흡수)';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = true; // matches Player's default (player.js)
+    checkbox.addEventListener('change', () => {
+      if (this.game) this.game.player.allyAbsorptionEnabled = checkbox.checked;
+    });
+    this.allyAbsorbCheckbox = checkbox;
+    row.appendChild(span);
+    row.appendChild(checkbox);
+    box.appendChild(row);
+    return box;
   }
 
   buildSkillThresholdSection() {

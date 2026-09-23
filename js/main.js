@@ -72,11 +72,12 @@ async function main() {
   const game = new Game(balance, canvas, input, ui);
   window.__game = game; // debug inspection hook
 
-  // v0.6 spec §7: right-click toggles whether the player can absorb same-color (ally) balls.
-  canvas.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    if (game.player.alive) game.player.allyAbsorptionEnabled = !game.player.allyAbsorptionEnabled;
-  });
+  // v0.6 follow-up: the ally-absorption toggle used to be a right-click gesture on the canvas,
+  // but that was too easy to trigger by accident mid-fight (a stray right-click during combat
+  // could silently turn it off). It now lives only in the Debug Panel (see ui.js's Gameplay
+  // section) — a deliberate action, not an easy mid-game misclick. Still suppress the browser's
+  // native context menu so right-clicking the canvas doesn't interrupt play with one.
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
   // v0.6 spec §17: mute button, persisted across reloads via localStorage.
   const muteBtn = document.getElementById('mute-btn');
