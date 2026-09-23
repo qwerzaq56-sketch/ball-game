@@ -53,6 +53,7 @@ export class Entity {
     this.currentAttackRange = 0; // snapshotted from size when an attack starts
     this.currentChargeDistance = 0; // snapshotted from size when an attack starts (v0.5 §6)
     this.currentChargeDuration = 0; // snapshotted from size when an attack starts (v0.6 §4-2)
+    this.currentTelegraphTime = 0; // snapshotted from size when an attack starts (v0.6 balance pass)
     this.attackStack = 0;
     this.attackMaxStack = 0;
     this.attackStackTimer = 0;

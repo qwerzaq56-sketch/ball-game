@@ -31,17 +31,20 @@ v0.5 말미에 "스택 회복 타이머가 이중 호출되어 2배 속도로 �
 실측: Size 110(2스택) AI를 고정 시나리오에 놓고 관찰한 결과, 스택이 남아있음에도 공격
 시도가 정확히 2.5초 간격으로만 발생하는 것을 확인했다(BALANCE_NOTES 참고).
 
-## 3. 공격 텔레그래프 0.4초 & Size 기반 차지 시간
+## 3. Size 기반 공격 텔레그래프 & 차지 시간
 
 ```
-Attack Telegraph Time = 0.4초 (기존 0.2초)
+telegraphTime = attackTelegraphTimeBase + size × attackTelegraphTimePerSize
 chargeDuration = attackChargeDurationBase + size × attackChargeDurationPerSize
 ```
 
-텔레그래프가 길어져 회피/반응 여지가 늘었다. 더해서 차지 시간 자체도 이제 Size에 비례한다
-(`js/combat.js#attackChargeDurationForSize`) — 기존에는 모든 크기의 공이 동일한 차지 시간을
-가졌지만, 이제 큰 공은 더 멀리·강하게 치는 대신 준비 자세를 더 오래 유지해야 한다. 기본값
-기준 Size 200에서 차지 시간이 정확히 0.8초가 되도록 계수를 맞췄다.
+최초 초안은 텔레그래프를 모든 크기에 동일한 고정값(0.4초)으로 뒀지만, 곧바로 이어진 밸런스
+피드백에서 텔레그래프도 차지 시간과 똑같이 Size에 비례하도록 바뀌었다(`js/combat.js`
+`attackTelegraphTimeForSize`/`attackChargeDurationForSize`) — 둘 다 "Size 50→0.2초,
+Size 100→0.4초"를 만족하는 계수(`base=0, perSize=0.004`)로 통일했다. 기존에는 모든 크기의
+공이 동일한 차지 시간을 가졌지만, 이제 큰 공은 더 멀리·강하게 치는 대신 예고 동작도, 준비
+자세도 더 오래 유지해야 한다 — 작은 공은 거의 즉발에 가깝게 찌르고 빠질 수 있는 반면, 큰
+공의 공격은 멀리서도 알아보고 대응할 여유가 상대적으로 더 크다.
 
 이때 돌진 **거리**는 여전히 v0.5의 방식(`currentAttackRange × chargeDistanceMultiplier`)을
 그대로 쓰고, 돌진 **속도**만 `거리 ÷ (이제는 Size에 따라 달라지는) 시간`으로 재계산된다 —
@@ -165,7 +168,11 @@ Game Over 시 `js/storage.js#submitScore()`가 `localStorage`에 상위 10개만
 `Game.reset()`은 플레이어·엔티티·타이머·카메라·Life·Score·오디오 드론 상태를 전부 생성자와
 동일한 방식으로 재구성하지만, **`localStorage`는 단 한 줄도 건드리지 않는다**
 (`js/storage.js`의 함수들은 오직 스코어보드/음소거 버튼 핸들러에서만 호출됨). Full Reset
-버튼은 `window.confirm()`으로 한 번 확인을 받는다(로컬 실수 방지 목적, 기획 요구사항은
+버튼은 확인을 한 번 받는다(로컬 실수 방지 목적, 기획 요구사항은 아니지만 자연스러운 안전
+장치) — 처음엔 `window.confirm()`을 썼는데, 일부 브라우저/임베딩 환경에서 사용자 조작 없이
+조용히 `false`를 반환하는 것이 실측으로 확인되어(버튼을 눌러도 아무 일도 안 일어나는 것처럼
+보였다) 게임 내 커스텀 확인창(`#reset-confirm-overlay`)으로 교체했다 — 자세한 경위는
+BALANCE_NOTES 참고.
 아니지만 UX상 자연스러운 안전장치).
 
 ## 14. 음소거

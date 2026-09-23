@@ -94,12 +94,21 @@ async function main() {
   });
 
   // v0.6 spec §14: Full Reset — confirmed since it discards the current run (but never the
-  // Top 10 scoreboard, which reset() deliberately never touches).
+  // Top 10 scoreboard, which reset() deliberately never touches). Uses a custom in-page
+  // confirm instead of window.confirm(): the native dialog was found to silently resolve to
+  // "cancel" with zero visible feedback in some browser/embedding contexts, which is exactly
+  // what made the button look broken/unresponsive.
   const resetBtn = document.getElementById('reset-btn');
+  const resetConfirmOverlay = document.getElementById('reset-confirm-overlay');
   resetBtn.addEventListener('click', () => {
-    if (window.confirm('진행 상황을 전체 초기화할까요? (Top 10 랭킹은 유지됩니다)')) {
-      game.reset();
-    }
+    resetConfirmOverlay.style.display = 'flex';
+  });
+  document.getElementById('reset-confirm-yes').addEventListener('click', () => {
+    resetConfirmOverlay.style.display = 'none';
+    game.reset();
+  });
+  document.getElementById('reset-confirm-no').addEventListener('click', () => {
+    resetConfirmOverlay.style.display = 'none';
   });
 
   // v0.6 spec §16: wired once — game.js calls this via onGameOver whenever Lives hits 0.

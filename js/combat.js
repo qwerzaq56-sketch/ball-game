@@ -51,6 +51,14 @@ export function attackChargeDurationForSize(size, balance) {
   return Math.max(0.05, c.attackChargeDurationBase + size * c.attackChargeDurationPerSize);
 }
 
+// v0.6 balance pass: Telegraph time used to be a flat constant (0.4s for every size) — now it
+// scales with Size exactly like Charge Duration, so a bigger ball also gives opponents more
+// visible warning before it commits, not just a longer wind-up once it's already charging.
+export function attackTelegraphTimeForSize(size, balance) {
+  const c = balance.combatScaling;
+  return Math.max(0.05, c.attackTelegraphTimeBase + size * c.attackTelegraphTimePerSize);
+}
+
 // v0.6 spec §6: linear instead of v0.5's exponential curve — Base(100) + Size × Growth(0.8).
 export function dodgeDistanceForSize(size, balance) {
   const d = balance.dodge;
@@ -74,6 +82,7 @@ export function startAttack(entity, dirAngle, balance) {
   entity.currentAttackRange = attackRangeForSize(entity.size, balance);
   entity.currentChargeDistance = entity.currentAttackRange * c.chargeDistanceMultiplier;
   entity.currentChargeDuration = attackChargeDurationForSize(entity.size, balance);
+  entity.currentTelegraphTime = attackTelegraphTimeForSize(entity.size, balance);
   if (entity.behavior === 'ai') entity.aiAttackGateTimer = balance.ai.attackCooldown;
 }
 
@@ -85,7 +94,7 @@ export function updateAttack(entity, dt, balance, hostiles, game) {
   switch (entity.attackState) {
     case 'TELEGRAPH': {
       entity.attackTimer += dt;
-      if (entity.attackTimer >= cfg.attackTelegraphTime) {
+      if (entity.attackTimer >= entity.currentTelegraphTime) {
         entity.attackState = 'CHARGING';
         entity.attackTimer = 0;
         if (game && entity === game.player) game.audio.attackCharge();

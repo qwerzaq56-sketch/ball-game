@@ -5,6 +5,36 @@
 결과다. (Browser pane이 숨겨지면 `requestAnimationFrame`이 멈추므로, `game.update(dt)`를
 고정 타임스텝으로 직접 호출하며 검증했다.)
 
+## [추가 수정] 사용자 리포트: 전체 초기화 버튼이 안 먹힘
+
+원인: `window.confirm()`이 일부 브라우저/임베딩 환경에서 사용자 상호작용 없이 조용히
+`false`를 반환한다 — 실제로 이 세션의 자동화 브라우저에서 직접 재현: `window.confirm('test')`
+호출 결과가 예외 없이 그냥 `false`. 버튼을 클릭해도 다이얼로그가 아예 뜨지 않거나(또는
+즉시 취소로 처리되어) `game.reset()`이 한 번도 호출되지 않는 것을 실제 클릭 테스트로 확인.
+
+수정: `window.confirm()`을 완전히 제거하고, Game Over 오버레이와 동일한 스타일의 **게임 내
+커스텀 확인창**(`#reset-confirm-overlay`)으로 교체 — "초기화"/"취소" 버튼을 직접 클릭하는
+방식이라 브라우저 네이티브 다이얼로그의 신뢰성 문제에서 완전히 자유롭다.
+
+재검증(실제 UI 클릭, 콘솔 조작 아님):
+- Growth 500을 부여해 Size 55까지 키운 뒤 "전체 초기화" 클릭 → 확인창 표시 → "초기화" 클릭
+  → HP 100/100, Growth 0, Size 20, Score 0, ATTACK/DODGE 모두 LOCKED로 정확히 초기화.
+- Score를 999로 설정한 뒤 "전체 초기화" → "취소" 클릭 → Score 999 그대로 유지, 오버레이만
+  닫힘 — 취소 시 아무 것도 초기화되지 않는 것도 확인.
+
+## [추가 수정] 밸런스 조정: 공격 텔레그래프/차지 시간의 Size 스케일링
+
+사용자 요청: 두 값 모두 "Size 50에서 0.2, Size 100에서 0.4"가 되도록 선형 스케일링.
+`base + size × perSize`에 두 점을 대입하면 `base=0, perSize=0.004`가 정확히 나온다(기존
+Charge Duration의 Size 200≈0.8 예시와도 `200×0.004=0.8`로 일관됨). 두 값 모두
+`attackChargeDurationBase/PerSize` → `attackChargeDurationBase:0, PerSize:0.004`로,
+텔레그래프 시간은 기존에 없던 `attackTelegraphTimeBase/PerSize`(0/0.004)를 새로 추가해
+Size 기반으로 전환했다(기존에는 `attack.attackTelegraphTime`이 모든 크기에 동일한 고정값
+0.4였다).
+
+실측: `attackChargeDurationForSize(50)=0.200`, `(100)=0.400`,
+`attackTelegraphTimeForSize(50)=0.200`, `(100)=0.400` — 요청값과 정확히 일치.
+
 ## §20 수치 반영 확인
 
 기획안 §20 "특히 반드시 반영" 목록을 코드에서 직접 읽어 대조했다 — 전부 정확히 일치.

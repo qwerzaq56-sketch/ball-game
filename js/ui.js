@@ -146,6 +146,7 @@ export class UI {
         ['baseAttackDamage', 1], ['attackDamagePerSize', 0.05],
         ['baseAttackRange', 2], ['attackRangeGrowthExponent', 0.05], ['chargeDistanceMultiplier', 0.05],
         ['attackChargeDurationBase', 0.01], ['attackChargeDurationPerSize', 0.0005],
+        ['attackTelegraphTimeBase', 0.01], ['attackTelegraphTimePerSize', 0.0005],
         ['baseDefense', 1], ['defensePerSize', 0.05], ['minimumDamage', 1],
         ['knockbackForce', 5],
       ] },
@@ -157,7 +158,7 @@ export class UI {
         ['delay', 0.1], ['baseRate', 0.1], ['regenPerSize', 0.005],
       ] },
       { label: 'Attack', key: 'attack', fields: [
-        ['attackTelegraphTime', 0.02], ['attackCooldown', 0.1], ['attackRecoveryTime', 0.05],
+        ['attackCooldown', 0.1], ['attackRecoveryTime', 0.05],
       ] },
       // v0.6 §6: baseDistance/distanceGrowth replace the old exponential dodge-distance curve.
       { label: 'Dodge', key: 'dodge', fields: [

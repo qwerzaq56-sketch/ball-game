@@ -11,7 +11,6 @@
     "minEatSizeDifference": 0
   },
   "attack": {
-    "attackTelegraphTime": 0.4,
     "attackCooldown": 1.5,
     "attackRecoveryTime": 0.4
   },
@@ -54,8 +53,10 @@
     "baseAttackRange": 120,
     "attackRangeGrowthExponent": 1.05,
     "chargeDistanceMultiplier": 1.0,
-    "attackChargeDurationBase": 0.4,
-    "attackChargeDurationPerSize": 0.002,
+    "attackChargeDurationBase": 0,
+    "attackChargeDurationPerSize": 0.004,
+    "attackTelegraphTimeBase": 0,
+    "attackTelegraphTimePerSize": 0.004,
     "baseDefense": 0,
     "defensePerSize": 0.5,
     "minimumDamage": 1,

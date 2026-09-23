@@ -670,7 +670,7 @@ export class Game {
 
     // telegraph indicator
     if (e.attackState === 'TELEGRAPH') {
-      const progress = e.attackTimer / this.balance.attack.attackTelegraphTime;
+      const progress = e.attackTimer / e.currentTelegraphTime;
       const reach = e.currentAttackRange > 0 ? e.currentAttackRange * 0.5 : 40;
       ctx.save();
       ctx.strokeStyle = 'rgba(255,255,255,0.85)';
